@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT English Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f0f4f8; color: #1e293b; line-height: 1.6; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #0f172a; }
+    .subtitle { color: #64748b; margin-bottom: 25px; font-size: 1rem; }
+    .student-info { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+    .student-info label { flex: 1; min-width: 200px; font-weight: 500; }
+    .student-info input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; }
+    .question { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0; }
+    .question:last-child { border-bottom: none; }
+    .question p { font-weight: 600; margin-bottom: 12px; font-size: 1.05rem; }
+    .question label { display: block; padding: 10px 12px; margin: 6px 0; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+    .question label:hover { background: #f8fafc; }
+    .question input[type="radio"] { margin-right: 10px; }
+    button[type="submit"] { width: 100%; padding: 15px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.2s; }
+    button[type="submit"]:hover { background: #1d4ed8; }
+    button[type="submit"]:disabled { background: #94a3b8; cursor: not-allowed; }
+    .status { text-align: center; margin-top: 15px; font-weight: 500; }
+    .status.ok { color: #16a34a; }
+    .status.err { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>IT English Test</h1>
+    <p class="subtitle">Проверь, как хорошо ты знаешь английский язык в сфере IT и интернета</p>
+    <form id="quizForm">
+      <div class="student-info">
+        <label>ФИО: <input type="text" name="student_name" required placeholder="Иванов Иван"></label>
+        <label>Группа: <input type="text" name="student_group" required placeholder="ИТ-21"></label>
+      </div>
+      <div id="questions"></div>
+      <button type="submit" id="submitBtn">Отправить результаты</button>
+      <p id="statusMsg" class="status"></p>
+    </form>
+  </main>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0OTj26GXKa3e8n5t2yPmtFnTdoFtRcceL_iNP9rK5nhzkntl1-hNUass8K9Er9zh5/exec';
+
+    const QUIZ = [
+      { q: '1. Что означает слово "Bug" в программировании?', options: ['Ошибка, сбой в программе', 'Жук, насекомое', 'Компьютерная мышь', 'Вирус'], correct: 0 },
+      { q: '2. Если программист говорит "It works on my machine", что он имеет в виду?', options: ['У меня всё работает (а у других нет)', 'Мой компьютер сломался', 'Мне нужен новый ноутбук', 'Я не знаю, как это исправить'], correct: 0 },
+      { q: '3. Что такое "Deadline"?', options: ['Крайний срок сдачи работы', 'Мертвая линия', 'Отключение интернета', 'Конец рабочего дня'], correct: 0 },
+      { q: '4. Как переводится слово "Upgrade"?', options: ['Улучшение, обновление', 'Вверх по лестнице', 'Загрузка файла', 'Удаление программы'], correct: 0 },
+      { q: '5. Что означает "To deploy"?', options: ['Развернуть, запустить проект на сервере', 'Удалить код', 'Написать документацию', 'Отдохнуть'], correct: 0 },
+      { q: '6. Если вас просят "Push the code", что нужно сделать?', options: ['Отправить код в удаленный репозиторий', 'Толкнуть компьютер', 'Удалить код', 'Скопировать код на флешку'], correct: 0 },
+      { q: '7. Что означает слово "Crash"?', options: ['Внезапное падение программы', 'Быстрая работа', 'Сохранение файла', 'Взлом системы'], correct: 0 },
+      { q: '8. Что такое "Feature"?', options: ['Функция, возможность программы', 'Ошибка', 'Вирус', 'Железо (комплектующие)'], correct: 0 },
+      { q: '9. Если вам нужно "Fix a bug", что вы будете делать?', options: ['Исправлять ошибку в коде', 'Ловить насекомое', 'Переустанавливать Windows', 'Покупать новый компьютер'], correct: 0 },
+      { q: '10. Что означает "Fake News" в интернете?', options: ['Фейковые, ложные новости', 'Свежие новости', 'Спортивные новости', 'Новости технологий'], correct: 0 }
+    ];
+
+    const form = document.getElementById('quizForm');
+    const questionsDiv = document.getElementById('questions');
+    const statusMsg = document.getElementById('statusMsg');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    QUIZ.forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = 'question';
+      let html = `<p>${item.q}</p>`;
+      let optionsWithStatus = item.options.map((opt, optIdx) => ({ text: opt, isCorrect: optIdx === item.correct }));
+      optionsWithStatus = shuffleArray(optionsWithStatus);
+      const correctIndex = optionsWithStatus.findIndex(o => o.isCorrect);
+      optionsWithStatus.forEach((optObj, i) => {
+        html += `<label><input type="radio" name="q${idx + 1}" value="${i}" required> ${optObj.text}</label>`;
+      });
+      div.innerHTML = html;
+      div.dataset.correctIndex = correctIndex;
+      questionsDiv.appendChild(div);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      statusMsg.textContent = 'Отправка данных...';
+      statusMsg.className = 'status';
+      const formData = new FormData(form);
+      let score = 0;
+      const payload = new URLSearchParams();
+      payload.append('student_name', formData.get('student_name'));
+      payload.append('student_group', formData.get('student_group'));
+
+      document.querySelectorAll('.question').forEach((qDiv, idx) => {
+        const answer = formData.get(`q${idx + 1}`);
+        const correctIndex = parseInt(qDiv.dataset.correctIndex);
+        let isCorrect = false;
+        
+        if (parseInt(answer) === correctIndex) {
+          score++;
+          isCorrect = true;
+        }
+        
+        payload.append(`q${idx + 1}`, isCorrect ? '1' : '0');
+      });
+
+      payload.append('score', score);
+      payload.append('total', QUIZ.length);
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: payload.toString()
+        });
+        statusMsg.textContent = `Тест завершен! Твой результат: ${score} из ${QUIZ.length}.`;
+        statusMsg.className = 'status ok';
+        form.reset();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        statusMsg.textContent = 'Ошибка при отправке.';
+        statusMsg.className = 'status err';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
